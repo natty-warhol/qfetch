@@ -3,9 +3,9 @@
 #include <cstdlib> /*system, NULL*/
 #include <pwd.h> /*password*/
 #include <unistd.h> /*setsid*/
-#include <sys/utsname.h>
-#include <sys/sysinfo.h>
-#include <cstring>
+#include <sys/utsname.h> /*host info*/
+#include <sys/sysinfo.h> /*system info -- critical*/
+#include <cstring> /*standard string*/
 #include <cpuid.h>  /*GCC-provided*/
 
 using namespace std ;
@@ -54,16 +54,20 @@ int main ( int argc, char *argv[] )
     host = uinfo.nodename ;
     std::cout << "      "   "◽ host        "  << host << std::endl;
 
-    string kernel ;
-    kernel = uinfo.sysname ; 
-    string version ;
-    version = uinfo.release ;
-    std::cout << "      "   "◽ kernel      "  << kernel << " " << version << std::endl;
+    string shell ;
+    shell = basename(pw -> pw_shell) ;
+    std::cout << "      "   "◽ shell       "  << shell << std::endl;
 
     __get_cpuid(0x80000002, brand+0x0, brand+0x1, brand+0x2, brand+0x3);
     __get_cpuid(0x80000003, brand+0x4, brand+0x5, brand+0x6, brand+0x7);
     __get_cpuid(0x80000004, brand+0x8, brand+0x9, brand+0xa, brand+0xb);
     printf("      ◽ cpu         " "%s\n", brand);
+
+    string kernel ;
+    kernel = uinfo.sysname ; 
+    string version ;
+    version = uinfo.release ;
+    std::cout << "      "   "◽ kernel      "  << kernel << " " << version << std::endl;
 
     printf(
         "      "   "◽ uptime      "  "%lih %lim\n",
@@ -73,10 +77,6 @@ int main ( int argc, char *argv[] )
     printf(
         "      "   "◽ procs       "  "%lu\n",
         sinfo.procs );
-
-    string shell ;
-    shell = basename(pw -> pw_shell) ;
-    std::cout << "      "   "◽ shell       "  << shell << std::endl;
 
     std::cout << "\n" << std::endl;
 
