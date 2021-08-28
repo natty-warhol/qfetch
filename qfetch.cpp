@@ -12,12 +12,14 @@ using namespace std ;
 
 int main ( int argc, char *argv[] )
 {
+    /*grab CPU info*/
     uint32_t brand[12];
 
     if (!__get_cpuid_max(0x80000004, NULL)) {
         fprintf(stderr, "Feature not implemented.");
         return 2; }
 
+    /*insert help argument*/
     if (argc >= 2) {
         if (strcmp("-h", argv[1]) != 0 && strcmp("--help", argv[1]) != 0)
             cout << "error: unrecognized option \n", argv[1];
