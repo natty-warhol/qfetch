@@ -22,9 +22,9 @@ int main ( int argc, char *argv[] )
     /*insert help argument*/
     if (argc >= 2) {
         if (strcmp("-h", argv[1]) != 0 && strcmp("--help", argv[1]) != 0)
-            cout << "error: unrecognized option \n", argv[1];
-            cout << "qfetch, based on bitfetch, minimized moreso and rewritten to C++ \n      --by anihilis \n\n";
-            return 1;
+            std::cout << "error: unrecognized option \n" << argv[1] << std::endl;
+            std::cout << "qfetch, based on bitfetch, minimized moreso and rewritten to C++ \n      --by anihilis \n\n" << std::endl;
+        return 1;
     }
     
     /* variable definitions */
