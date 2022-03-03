@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cstdio> /*printf*/
 #include <cstdlib> /*system, NULL*/
 #include <pwd.h> /*password*/
@@ -33,8 +34,6 @@ int main ( int argc, char *argv[] )
     struct sysinfo sinfo;
     struct passwd *pw;
 
-    /* gathering information */
-
     uname(&uinfo);
     sysinfo(&sinfo);
     pw = getpwuid(geteuid());
@@ -48,15 +47,15 @@ int main ( int argc, char *argv[] )
     /* print all information */
 
     std::cout << "  " << std::endl;
-    string name ;
+    std::string name ;
     name = pw -> pw_name ;
     std::cout << "\n \033[1m\033[37mwelcome, " << name << "\033[1;31m ♥\033[0m \n\n" << std::endl;
 
-    string host ;
+    std::string host ;
     host = uinfo.nodename ;
     std::cout << "      "   "\033[1;33m•\033[0m \033[1m\033[37m host\033[0m        "  << host << std::endl;
 
-    string shell ;
+    std::string shell ;
     shell = basename(pw -> pw_shell) ;
     std::cout << "      "   "\033[1;32m•\033[0m \033[1m\033[37m shell\033[0m       "  << shell << std::endl;
 
@@ -65,9 +64,9 @@ int main ( int argc, char *argv[] )
     __get_cpuid(0x80000004, brand+0x8, brand+0x9, brand+0xa, brand+0xb);
     printf("      \033[1;36m•\033[0m \033[1m\033[37m cpu\033[0m         " "%s\n", brand);
 
-    string kernel ;
+    std::string kernel ;
     kernel = uinfo.sysname ; 
-    string version ;
+    std::string version ;
     version = uinfo.release ;
     std::cout << "      "   "\033[1;34m•\033[0m \033[1m\033[37m kernel\033[0m      "  << kernel << " " << version << std::endl;
 
