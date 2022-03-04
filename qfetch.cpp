@@ -11,7 +11,7 @@
 
 using namespace std ;
 
-char* get_distro();
+extern "C" char* get_distro();
 
 int main ( int argc, char *argv[] )
 {
