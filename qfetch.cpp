@@ -21,17 +21,10 @@ int get_distro(char* distro, int array_length) {
     char* token;
     int distro_size;
 
-    if (stat("/etc/os-release", &s) == -1) {
-        fprintf(stderr, "[Error] Failed to stat /etc/os-release!\n");
-        return -1; }
-
     buff = (char*)malloc(s.st_size + 1);
     buff[s.st_size] = '\0';
 
     fp = fopen("/etc/os-release", "r");
-    if (fp == NULL) {
-        fprintf(stderr, "[Error] Failed to open /etc/os-release!\n");
-        return -1; }
 
     fread(buff, sizeof(char*), s.st_size, fp);
     fclose(fp);
@@ -39,12 +32,8 @@ int get_distro(char* distro, int array_length) {
     token = strtok(buff, "\n");
     while (token != NULL) {
         if (strncmp(token, "NAME=", 5) == 0) {
-            token += 5;
-            distro_size = strlen(token);
-            /* added this check */
-            if (distro_size >= array_length) {
-                fprintf(stderr, "[Error] Distro name size is bigger than the passed array length!\n");
-                return -1; }
+            token += 6;
+            distro_size = (strlen(token) - 1);
             strcpy(distro, token);
             distro[distro_size] = '\0';
             free(buff);
