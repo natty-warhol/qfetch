@@ -30,7 +30,7 @@ int get_distro(char* distro, int array_length) {
     buff = (char*)malloc(s.st_size + 1);
     buff[s.st_size] = '\0';
 
-    fp = fopen("/usr/lib/os-release", "r");
+    fp = fopen("/etc/os-release", "r");
     if (fp == NULL) {
         fprintf(stderr, "[Error] Failed to open /etc/os-release!\n");
         return -1;
