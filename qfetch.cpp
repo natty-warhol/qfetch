@@ -6,10 +6,56 @@
 #include <unistd.h> /*setsid*/
 #include <sys/utsname.h> /*host info*/
 #include <sys/sysinfo.h> /*system info -- critical*/
+#include <sys/stat.h> /* struct stat, stat */
 #include <cstring> /*standard string*/
 #include <cpuid.h>  /*GCC-provided*/
 
 using namespace std ;
+
+extern "C" char* get_distro();
+
+int get_distro(char* distro, int array_length) {
+    struct stat s;
+    FILE* fp;
+    char* buff;
+    char* token;
+    int distro_size;
+
+    if (stat("/etc/os-release", &s) == -1) {
+        fprintf(stderr, "[Error] Failed to stat /etc/os-release!\n");
+        return -1; }
+
+    buff = (char*)malloc(s.st_size + 1);
+    buff[s.st_size] = '\0';
+
+    fp = fopen("/etc/os-release", "r");
+    if (fp == NULL) {
+        fprintf(stderr, "[Error] Failed to open /etc/os-release!\n");
+        return -1; }
+
+    fread(buff, sizeof(char*), s.st_size, fp);
+    fclose(fp);
+
+    token = strtok(buff, "\n");
+    while (token != NULL) {
+        if (strncmp(token, "NAME=", 5) == 0) {
+            token += 5;
+            distro_size = strlen(token);
+            /* added this check */
+            if (distro_size >= array_length) {
+                fprintf(stderr, "[Error] Distro name size is bigger than the passed array length!\n");
+                return -1; }
+            strcpy(distro, token);
+            distro[distro_size] = '\0';
+            free(buff);
+            return 0; }
+        token = strtok(NULL, "\n"); }
+
+    free(buff);
+    fprintf(stderr, "[Error] Failed to find NAME in /etc/os-release!\n");
+    return -1; }
+
+#define ARR_LEN 255
 
 int main ( int argc, char *argv[] )
 {
@@ -27,7 +73,7 @@ int main ( int argc, char *argv[] )
             std::cout << "qfetch, based on bitfetch, minimized moreso and rewritten to C++ \n      --by anihilis \n\n" << std::endl;
         return 1;
     }
-    
+
     /* variable definitions */
 
     struct utsname uinfo;
@@ -53,7 +99,14 @@ int main ( int argc, char *argv[] )
 
     std::string host ;
     host = uinfo.nodename ;
-    std::cout << "      "   "\033[1;33m•\033[0m \033[1m\033[37m host\033[0m        "  << host << std::endl;
+    std::cout << "      "   "\033[1;37m•\033[0m \033[1m\033[37m host\033[0m        "  << host << std::endl;
+    
+    char distro[ARR_LEN];
+    if (get_distro(distro, ARR_LEN)) {
+        return 1;
+    }
+    printf("      \033[1;33m•\033[0m \033[1m\033[37m distro\033[0m      " "%s\n", distro);
+    
 
     std::string shell ;
     shell = basename(pw -> pw_shell) ;
@@ -78,6 +131,7 @@ int main ( int argc, char *argv[] )
     printf(
         "      "   "\033[1;31m•\033[0m \033[1m\033[37m procs\033[0m       "  "%lu\n",
         sinfo.procs );
+
 
     std::cout << "\n" << std::endl;
 
