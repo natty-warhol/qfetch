@@ -11,6 +11,8 @@
 
 using namespace std ;
 
+extern "C" char* get_distro();
+
 int main ( int argc, char *argv[] )
 {
     /*grab CPU info*/
@@ -78,6 +80,10 @@ int main ( int argc, char *argv[] )
     printf(
         "      "   "\033[1;31m•\033[0m \033[1m\033[37m procs\033[0m       "  "%lu\n",
         sinfo.procs );
+
+    char* distro = get_distro();
+    printf("distro: %s\n", distro);
+    free(distro);
 
     std::cout << "\n" << std::endl;
 
