@@ -140,8 +140,7 @@ main (int argc, char *argv[])
     std::cout << "      "
                  "\033[1;34m•\033[0m \033[1m\033[37m kernel\033[0m      " << kernel << " " << version << std::endl;
 
-    printf ("      " "\033[1;35m•\033[0m \033[1m\033[37m uptime\033[0m      " "%lih %lim\n",
-            sinfo.uptime / 3600, (sinfo.uptime / 60) - (sinfo.uptime / 3600 * 60), sinfo.loads[0] * LOADAVG_SHIFT, sinfo.loads[1] * LOADAVG_SHIFT, sinfo.loads[2] * LOADAVG_SHIFT);
+    printf ("      " "\033[1;35m•\033[0m \033[1m\033[37m uptime\033[0m      " "%lih %lim\n", sinfo.uptime / 3600, (sinfo.uptime / 60) - (sinfo.uptime / 3600 * 60), sinfo.loads[0] * LOADAVG_SHIFT, sinfo.loads[1] * LOADAVG_SHIFT, sinfo.loads[2] * LOADAVG_SHIFT);
 
     printf ("      " "\033[1;31m•\033[0m \033[1m\033[37m procs\033[0m       " "%lu\n", sinfo.procs);
 
