@@ -14,8 +14,7 @@ using namespace std;
 
 extern "C" char *get_distro ();
 
-int
-get_distro (char *distro, int array_length)
+int get_distro (char *distro, int array_length)
 {
     struct stat s;
     FILE *fp;
@@ -86,8 +85,7 @@ main (int argc, char *argv[])
         {
             if (strcmp ("-h", argv[1]) != 0 && strcmp ("--help", argv[1]) != 0)
                 std::cout << "error: unrecognized option \n" << argv[1] << std::endl;
-            std::cout << "qfetch, based on bitfetch, minimized moreso and rewritten to C++ \n      --by anihilis \n\n"
-                      << std::endl;
+            std::cout << "qfetch, based on bitfetch, minimized moreso and rewritten to C++ \n      --by anihilis \n\n" << std::endl;
             return 1;
         }
 
@@ -117,49 +115,35 @@ main (int argc, char *argv[])
     std::string host;
     host = uinfo.nodename;
     std::cout << "      "
-                 "\033[1;37m•\033[0m \033[1m\033[37m host\033[0m        "
-              << host << std::endl;
+                 "\033[1;37m•\033[0m \033[1m\033[37m host\033[0m        " << host << std::endl;
 
     char distro[ARR_LEN];
     if (get_distro (distro, ARR_LEN))
         {
             return 1;
         }
-    printf ("      \033[1;33m•\033[0m \033[1m\033[37m distro\033[0m      "
-            "%s\n",
-            distro);
+    printf ("      \033[1;33m•\033[0m \033[1m\033[37m distro\033[0m      " "%s\n", distro);
 
     std::string shell;
     shell = basename (pw->pw_shell);
-    std::cout << "      "
-                 "\033[1;32m•\033[0m \033[1m\033[37m shell\033[0m       "
-              << shell << std::endl;
+    std::cout << "      " "\033[1;32m•\033[0m \033[1m\033[37m shell\033[0m       " << shell << std::endl;
 
     __get_cpuid (0x80000002, brand + 0x0, brand + 0x1, brand + 0x2, brand + 0x3);
     __get_cpuid (0x80000003, brand + 0x4, brand + 0x5, brand + 0x6, brand + 0x7);
     __get_cpuid (0x80000004, brand + 0x8, brand + 0x9, brand + 0xa, brand + 0xb);
-    printf ("      \033[1;36m•\033[0m \033[1m\033[37m cpu\033[0m         "
-            "%s\n",
-            brand);
+    printf ("      \033[1;36m•\033[0m \033[1m\033[37m cpu\033[0m         " "%s\n", brand);
 
     std::string kernel;
     kernel = uinfo.sysname;
     std::string version;
     version = uinfo.release;
     std::cout << "      "
-                 "\033[1;34m•\033[0m \033[1m\033[37m kernel\033[0m      "
-              << kernel << " " << version << std::endl;
+                 "\033[1;34m•\033[0m \033[1m\033[37m kernel\033[0m      " << kernel << " " << version << std::endl;
 
-    printf ("      "
-            "\033[1;35m•\033[0m \033[1m\033[37m uptime\033[0m      "
-            "%lih %lim\n",
-            sinfo.uptime / 3600, (sinfo.uptime / 60) - (sinfo.uptime / 3600 * 60), sinfo.loads[0] * LOADAVG_SHIFT,
-            sinfo.loads[1] * LOADAVG_SHIFT, sinfo.loads[2] * LOADAVG_SHIFT);
+    printf ("      " "\033[1;35m•\033[0m \033[1m\033[37m uptime\033[0m      " "%lih %lim\n",
+            sinfo.uptime / 3600, (sinfo.uptime / 60) - (sinfo.uptime / 3600 * 60), sinfo.loads[0] * LOADAVG_SHIFT, sinfo.loads[1] * LOADAVG_SHIFT, sinfo.loads[2] * LOADAVG_SHIFT);
 
-    printf ("      "
-            "\033[1;31m•\033[0m \033[1m\033[37m procs\033[0m       "
-            "%lu\n",
-            sinfo.procs);
+    printf ("      " "\033[1;31m•\033[0m \033[1m\033[37m procs\033[0m       " "%lu\n", sinfo.procs);
 
     std::cout << "\n" << std::endl;
 
