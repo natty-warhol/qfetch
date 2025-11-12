@@ -1,150 +1,139 @@
-#include <cpuid.h>
-#include <cstdio> 
-#include <cstdlib>
-#include <cstring>
-#include <fstream>
 #include <iostream>
-#include <pwd.h>
-#include <sys/stat.h>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <iomanip>
 #include <sys/sysinfo.h>
 #include <sys/utsname.h>
 #include <unistd.h>
+#include <pwd.h>
+#include <libgen.h>
 
-using namespace std;
-
-extern "C" char *get_distro ();
-
-int get_distro (char *distro, int array_length)
-{
-    struct stat s;
-    FILE *fp;
-    char *buff;
-    char *token;
-    int distro_size;
-
-    if (stat ("/etc/os-release", &s) == -1)
-        {
-            fprintf (stderr, "[Error] Failed to stat /etc/os-release!\n");
-            return -1;
-        }
-
-    buff = (char *)malloc (s.st_size + 1);
-    buff[s.st_size] = '\0';
-
-    fp = fopen ("/etc/os-release", "r");
-    if (fp == NULL)
-        {
-            fprintf (stderr, "[Error] Failed to open /etc/os-release!\n");
-            return -1;
-        }
-
-    fread (buff, sizeof (char *), s.st_size, fp);
-    fclose (fp);
-
-    token = strtok (buff, "\n");
-    while (token != NULL)
-        {
-            if (strncmp (token, "NAME=", 5) == 0)
-                {
-                    token += 6;
-                    distro_size = (strlen (token) - 1);
-                    if (distro_size >= array_length)
-                        {
-                            fprintf (stderr, "[Error] Distro name size is bigger than the passed array length!\n");
-                            return -1;
-                        }
-                    strcpy (distro, token);
-                    distro[distro_size] = '\0';
-                    free (buff);
-                    return 0;
-                }
-            token = strtok (NULL, "\n");
-        }
-
-    free (buff);
-    fprintf (stderr, "[Error] Failed to find NAME in /etc/os-release!\n");
-    return -1;
+// functions //
+// hostname
+std::string getHostname() {
+    char name[256];
+    if (gethostname(name, sizeof(name)) == 0)
+        return std::string(name);
+    return "unknown";
 }
 
-#define ARR_LEN 255
-
-int
-main (int argc, char *argv[])
-{
-    /*grab CPU info*/
-    uint32_t brand[12];
-
-    if (!__get_cpuid_max (0x80000004, NULL))
-        {
-            fprintf (stderr, "Feature not implemented.");
-            return 2;
+// distro
+std::string getOSName() {
+    std::ifstream file("/etc/os-release");
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.rfind("PRETTY_NAME=", 0) == 0) {
+            // remove surrounding quotes if present
+            std::string value = line.substr(13, line.size() - 14);
+            return value;
         }
+    }
+    return "unknown linux";
+}
 
-    /*insert help argument*/
-    if (argc >= 2)
-        {
-            if (strcmp ("-h", argv[1]) != 0 && strcmp ("--help", argv[1]) != 0)
-                std::cout << "error: unrecognized option \n" << argv[1] << std::endl;
-            std::cout << "qfetch, based on bitfetch, minimized moreso and rewritten to C++ \n      --by anihilis \n\n" << std::endl;
-            return 1;
+// shell and user
+std::tuple<std::string, std::string> getUserShell() {
+    struct passwd* pw = getpwuid(getuid());
+    std::string user = "unknown";
+    std::string shell = "unknown";
+
+    if (pw) {
+        if (pw->pw_name) user = pw->pw_name;
+        if (pw->pw_shell) shell = basename (pw->pw_shell);
+    }
+
+    return {user, shell};
+}
+
+// cpu info
+std::string getCPUInfo() {
+    std::ifstream file("/proc/cpuinfo");
+    std::string line, model;
+    int cores = 0;
+
+    while (std::getline(file, line)) {
+        if (line.rfind("model name", 0) == 0) {
+            if (model.empty()) {
+                //extract after ": "
+                size_t pos = line.find(':');
+                if (pos != std::string::npos)
+                    model = line.substr(pos + 2);
+            }
+            ++cores;
         }
+    }
 
-    /* variable definitions */
+    if (model.empty()) return "unknown CPU";
+    std::ostringstream out;
+    out << model << " (" << cores << " cores)";
+    return out.str();
+}
 
-    struct utsname uinfo;
-    struct sysinfo sinfo;
-    struct passwd *pw;
+// kernel
+std::string getKernelVersion() {
+    struct utsname buf;
+    if (uname(&buf) == 0) {
+        std::ostringstream out;
+        out << buf.sysname << " " << buf.release;
+        return out.str();
+    }
+    return "unknown kernel";
+}
 
-    uname (&uinfo);
-    sysinfo (&sinfo);
-    pw = getpwuid (geteuid ());
+// uptime
+std::string getUptime() {
+    std::ifstream file("/proc/uptime");
+    double seconds;
+    if (!(file >> seconds)) return "unknown";
+    int days = seconds / 86400;
+    int hours = ((int)seconds % 86400) / 3600;
+    int minutes = ((int)seconds % 3600) / 60;
 
-#ifndef SI_LOAD_SHIFT
-#define SI_LOAD_SHIFT 16
-#endif
+    std::ostringstream out;
+    if (days) out << days << "d ";
+    if (hours) out << hours << "h ";
+    out << minutes << "m";
+    return out.str();
+}
 
-#define LOADAVG_SHIFT (1.0 / (1 << SI_LOAD_SHIFT))
+// process count
+std::string getProcs() {
+    struct sysinfo buf;
+    if (sysinfo(&buf) == 0) {
+        std::ostringstream out;
+        out << buf.procs;
+        return out.str();
+    }
+    return "unknown procs";
+}
 
-    /* print all information */
+// display //
+void printStat(const std::string& label, const std::string& value, const std::string& color = "\033[1;36m") {
+    std::cout << color << std::left << std::setw(12) << label << "\033[0m" << value << '\n';
+}
 
-    std::cout << "  " << std::endl;
-    std::string name;
-    name = pw->pw_name;
-    std::cout << "\n \033[1m\033[37mwelcome, " << name << "\033[1;31m ♥\033[0m \n\n" << std::endl;
+// main //
+int main() {
+    std::ios::sync_with_stdio(false);
 
-    std::string host;
-    host = uinfo.nodename;
-    std::cout << "      "
-                 "\033[1;37m•\033[0m \033[1m\033[37m host\033[0m        " << host << std::endl;
+    auto [user, shell] = getUserShell();
+    std::string host = getHostname();
+    std::string os = getOSName();
+    std::string cpu = getCPUInfo();
+    std::string kernel = getKernelVersion();
+    std::string uptime = getUptime();
+    std::string procs = getProcs();
 
-    char distro[ARR_LEN];
-    if (get_distro (distro, ARR_LEN))
-        {
-            return 1;
-        }
-    printf ("      \033[1;33m•\033[0m \033[1m\033[37m distro\033[0m      " "%s\n", distro);
-
-    std::string shell;
-    shell = basename (pw->pw_shell);
-    std::cout << "      " "\033[1;32m•\033[0m \033[1m\033[37m shell\033[0m       " << shell << std::endl;
-
-    __get_cpuid (0x80000002, brand + 0x0, brand + 0x1, brand + 0x2, brand + 0x3);
-    __get_cpuid (0x80000003, brand + 0x4, brand + 0x5, brand + 0x6, brand + 0x7);
-    __get_cpuid (0x80000004, brand + 0x8, brand + 0x9, brand + 0xa, brand + 0xb);
-    printf ("      \033[1;36m•\033[0m \033[1m\033[37m cpu\033[0m         " "%s\n", brand);
-
-    std::string kernel;
-    kernel = uinfo.sysname;
-    std::string version;
-    version = uinfo.release;
-    std::cout << "      "
-                 "\033[1;34m•\033[0m \033[1m\033[37m kernel\033[0m      " << kernel << " " << version << std::endl;
-
-    printf ("      " "\033[1;35m•\033[0m \033[1m\033[37m uptime\033[0m      " "%lih %lim\n", sinfo.uptime / 3600, (sinfo.uptime / 60) - (sinfo.uptime / 3600 * 60), sinfo.loads[0] * LOADAVG_SHIFT, sinfo.loads[1] * LOADAVG_SHIFT, sinfo.loads[2] * LOADAVG_SHIFT);
-
-    printf ("      " "\033[1;31m•\033[0m \033[1m\033[37m procs\033[0m       " "%lu\n", sinfo.procs);
-
-    std::cout << "\n" << std::endl;
+    std::cout << "\n"
+              << "\033[1m\033[37mwelcome, " << user << "\033[1;31m ♥\033[0m \n\n"
+              << "      " << "\033[1;37m•\033[0m \033[1m\033[37m host\033[0m        " << host << "\n"
+              << "      " << "\033[1;33m•\033[0m \033[1m\033[37m distro\033[0m      " << os << "\n"
+              << "      " << "\033[1;32m•\033[0m \033[1m\033[37m shell\033[0m       " << shell << "\n" 
+              << "      " << "\033[1;36m•\033[0m \033[1m\033[37m cpu\033[0m         " << cpu << "\n"
+              << "      " << "\033[1;34m•\033[0m \033[1m\033[37m kernel\033[0m      " << kernel << "\n"
+              << "      " << "\033[1;35m•\033[0m \033[1m\033[37m uptime\033[0m      " << uptime << "\n"
+              << "      " << "\033[1;31m•\033[0m \033[1m\033[37m procs\033[0m       " << procs << "\n" << std::endl;
 
     return 0;
 }
